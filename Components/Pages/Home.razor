@@ -1,0 +1,206 @@
+﻿@page "/"
+@using StudioAlAmalWeb.Services
+@inject AuthenticationService AuthService
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<PageTitle>Home - Studio Al Amal</PageTitle>
+
+<div class="home-container">
+    <div class="hero-section">
+        <h1>Welcome to Studio Al Amal</h1>
+        <p class="lead">Professional Photography Studio in Tunisia</p>
+
+        @if (isAuthenticated)
+        {
+            <div class="welcome-message">
+                <h3>Welcome back, @username!</h3>
+                <p>Role: @role</p>
+                <button class="btn btn-danger" @onclick="HandleLogout">Logout</button>
+            </div>
+        }
+        else
+        {
+            <div class="auth-buttons">
+                <a href="/login" class="btn btn-primary">Login</a>
+                <a href="/register" class="btn btn-outline-primary">Register</a>
+            </div>
+        }
+    </div>
+
+    <div class="info-section">
+        <h2>Our Services</h2>
+        <div class="services-grid">
+            <div class="service-card">
+                <h3>Wedding Photography</h3>
+                <p>Capture your special day with professional wedding photography</p>
+            </div>
+            <div class="service-card">
+                <h3>Portrait Sessions</h3>
+                <p>Professional portraits for individuals and families</p>
+            </div>
+            <div class="service-card">
+                <h3>Event Coverage</h3>
+                <p>Complete coverage of corporate and social events</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .home-container {
+        padding: 40px 20px;
+    }
+
+    .hero-section {
+        text-align: center;
+        padding: 60px 20px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 10px;
+        margin-bottom: 40px;
+    }
+
+        .hero-section h1 {
+            font-size: 3rem;
+            margin-bottom: 20px;
+        }
+
+        .hero-section .lead {
+            font-size: 1.5rem;
+            margin-bottom: 30px;
+        }
+
+    .welcome-message {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 30px;
+        border-radius: 10px;
+        margin-top: 30px;
+    }
+
+    .auth-buttons {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        margin-top: 30px;
+    }
+
+    .btn {
+        padding: 12px 30px;
+        font-size: 18px;
+        border-radius: 5px;
+        text-decoration: none;
+        display: inline-block;
+        cursor: pointer;
+        border: none;
+    }
+
+    .btn-primary {
+        background: white;
+        color: #667eea;
+    }
+
+    .btn-outline-primary {
+        background: transparent;
+        color: white;
+        border: 2px solid white;
+    }
+
+    .btn-danger {
+        background: #dc3545;
+        color: white;
+    }
+
+    .info-section {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+        .info-section h2 {
+            text-align: center;
+            margin-bottom: 40px;
+            font-size: 2.5rem;
+        }
+
+    .services-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 30px;
+    }
+
+    .service-card {
+        background: white;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+        .service-card h3 {
+            margin-bottom: 15px;
+            color: #667eea;
+        }
+</style>
+@code {
+    private bool isAuthenticated = false;
+    private string? username = null;
+    private string? role = null;
+    private bool isInitialized = false;
+    private bool isLoading = true; // Track loading state
+
+    protected override void OnInitialized()
+    {
+        // Use OnInitialized instead of OnInitializedAsync since we're not doing async work
+        AuthService.OnAuthStateChanged += HandleAuthStateChanged;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !isInitialized)
+        {
+            isLoading = true;
+            StateHasChanged(); // Show loading state
+
+            try
+            {
+                await AuthService.InitializeAsync();
+                await CheckAuthState();
+                isInitialized = true;
+            }
+            finally
+            {
+                isLoading = false;
+                StateHasChanged(); // Hide loading state
+            }
+        }
+    }
+
+    private async Task CheckAuthState()
+    {
+        isAuthenticated = await AuthService.IsAuthenticatedAsync();
+        if (isAuthenticated)
+        {
+            username = await AuthService.GetUsernameAsync();
+            role = await AuthService.GetRoleAsync();
+        }
+    }
+
+    private async void HandleAuthStateChanged()
+    {
+        if (isInitialized)
+        {
+            await CheckAuthState();
+            await InvokeAsync(StateHasChanged); // Ensure UI thread
+        }
+    }
+
+    private async Task HandleLogout()
+    {
+        await AuthService.LogoutAsync();
+        Navigation.NavigateTo("/", forceLoad: true);
+    }
+
+    public void Dispose()
+    {
+        AuthService.OnAuthStateChanged -= HandleAuthStateChanged;
+    }
+}

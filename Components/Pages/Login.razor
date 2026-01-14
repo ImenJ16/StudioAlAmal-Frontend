@@ -1,0 +1,172 @@
+﻿@page "/login"
+@using StudioAlAmalWeb.Models
+@using StudioAlAmalWeb.Services
+@inject AuthenticationService AuthService
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<PageTitle>Login - Studio Al Amal</PageTitle>
+
+<div class="login-container">
+    <div class="login-card">
+        <div class="login-header">
+            <h2>Admin Login</h2>
+            <p class="text-muted">Studio Al Amal</p>
+        </div>
+
+        <EditForm Model="loginModel" OnValidSubmit="HandleLogin" FormName="loginForm">
+            <DataAnnotationsValidator />
+
+            <div class="form-group">
+                <label for="username">Username</label>
+                <InputText id="username"
+                           class="form-control"
+                           @bind-Value="loginModel.Username"
+                           placeholder="Enter your username" />
+                <ValidationMessage For="@(() => loginModel.Username)" class="text-danger" />
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <InputText id="password"
+                           type="password"
+                           class="form-control"
+                           @bind-Value="loginModel.Password"
+                           placeholder="Enter your password" />
+                <ValidationMessage For="@(() => loginModel.Password)" class="text-danger" />
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block" disabled="@isLoggingIn">
+                @if (isLoggingIn)
+                {
+                    <span class="spinner-border spinner-border-sm me-2"></span>
+                    <span>Logging in...</span>
+                }
+                else
+                {
+                    <span>Login</span>
+                }
+            </button>
+
+            @if (!string.IsNullOrEmpty(message))
+            {
+                <div class="alert @(isSuccess ? "alert-success" : "alert-danger") mt-3" role="alert">
+                    @message
+                </div>
+            }
+        </EditForm>
+
+        <div class="login-footer">
+            <p>Don't have an account? <a href="/register">Register here</a></p>
+        </div>
+    </div>
+</div>
+
+<style>
+    .login-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 80vh;
+        padding: 20px;
+    }
+
+    .login-card {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        padding: 40px;
+        width: 100%;
+        max-width: 400px;
+    }
+
+    .login-header {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+
+    .login-header h2 {
+        margin-bottom: 5px;
+        color: #333;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: 500;
+        color: #555;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 10px 15px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        font-size: 16px;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: #007bff;
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    }
+
+    .btn-block {
+        width: 100%;
+        padding: 12px;
+        font-size: 16px;
+        margin-top: 10px;
+    }
+
+    .login-footer {
+        text-align: center;
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 1px solid #eee;
+    }
+</style>
+
+@code {
+    [SupplyParameterFromForm]
+    private LoginRequest loginModel { get; set; } = new();
+
+    private bool isLoggingIn = false;
+    private string message = string.Empty;
+    private bool isSuccess = false;
+
+    private async Task HandleLogin()
+    {
+        isLoggingIn = true;
+        message = string.Empty;
+
+        try
+        {
+            var (success, msg) = await AuthService.LoginAsync(loginModel);
+
+            isSuccess = success;
+            message = msg;
+
+            if (success)
+            {
+                // Wait a moment to show success message
+                await Task.Delay(500);
+
+                // Redirect to home or admin dashboard
+                Navigation.NavigateTo("/", forceLoad: true);
+            }
+        }
+        catch (Exception ex)
+        {
+            isSuccess = false;
+            message = $"Error: {ex.Message}";
+        }
+        finally
+        {
+            isLoggingIn = false;
+        }
+    }
+}
