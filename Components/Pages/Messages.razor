@@ -8,7 +8,16 @@
 
 <PageTitle>Messages - Studio Al Amal Admin</PageTitle>
 
-@if (!isAuthenticated)
+@if (!isInitialized)
+{
+    <div class="loading-state">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p>Loading...</p>
+    </div>
+}
+else if (!isAuthenticated)
 {
     <div class="alert alert-warning">
         <p>You must be logged in to view messages.</p>
@@ -235,22 +244,28 @@ else
 
 @code {
     private bool isAuthenticated = false;
+    private bool isInitialized = false;
     private List<ContactSubmission> messages = new();
     private bool isLoading = false;
     private bool showUnreadOnly = false;
     private int unreadCount = 0;
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        isAuthenticated = await AuthService.IsAuthenticatedAsync();
-
-        if (!isAuthenticated)
+        if (firstRender)
         {
-            Navigation.NavigateTo("/login");
-            return;
-        }
+            isAuthenticated = await AuthService.IsAuthenticatedAsync();
 
-        await LoadMessages();
+            if (!isAuthenticated)
+            {
+                Navigation.NavigateTo("/login");
+                return;
+            }
+
+            isInitialized = true;
+            await LoadMessages();
+            StateHasChanged(); // Force UI update
+        }
     }
 
     private async Task LoadMessages()
