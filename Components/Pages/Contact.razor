@@ -1,0 +1,367 @@
+﻿@page "/contact"
+@using StudioAlAmalWeb.Models
+@using StudioAlAmalWeb.Services
+@inject CommunicationService CommService
+@rendermode InteractiveServer
+
+<PageTitle>Contact Us - Studio Al Amal</PageTitle>
+
+<div class="contact-page">
+    <div class="contact-header">
+        <h1>Get in Touch</h1>
+        <p class="lead">We'd love to hear from you! Send us a message and we'll respond as soon as possible.</p>
+    </div>
+
+    @if (formSubmitted)
+    {
+        <!-- Success Message -->
+        <div class="success-container">
+            <div class="success-card">
+                <div class="success-icon">✓</div>
+                <h2>Message Sent Successfully!</h2>
+                <p>@successMessage</p>
+                <button class="btn btn-primary" @onclick="ResetForm">Send Another Message</button>
+                <a href="/" class="btn btn-outline-primary">Back to Home</a>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="contact-content">
+            <!-- Contact Form -->
+            <div class="contact-form-section">
+                <h2>Send us a Message</h2>
+
+                <EditForm Model="contactForm" OnValidSubmit="HandleSubmit" FormName="contactForm">
+                    <DataAnnotationsValidator />
+
+                    <div class="form-group">
+                        <label for="fullName">Full Name <span class="required">*</span></label>
+                        <InputText id="fullName"
+                                   class="form-control"
+                                   @bind-Value="contactForm.FullName"
+                                   placeholder="John Doe" />
+                        <ValidationMessage For="@(() => contactForm.FullName)" class="text-danger" />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">Email Address <span class="required">*</span></label>
+                        <InputText id="email"
+                                   type="email"
+                                   class="form-control"
+                                   @bind-Value="contactForm.Email"
+                                   placeholder="john@example.com" />
+                        <ValidationMessage For="@(() => contactForm.Email)" class="text-danger" />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="phone">Phone Number</label>
+                        <InputText id="phone"
+                                   class="form-control"
+                                   @bind-Value="contactForm.Phone"
+                                   placeholder="+216 XX XXX XXX" />
+                        <ValidationMessage For="@(() => contactForm.Phone)" class="text-danger" />
+                        <small class="form-text text-muted">Optional - Include country code</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="subject">Subject <span class="required">*</span></label>
+                        <InputText id="subject"
+                                   class="form-control"
+                                   @bind-Value="contactForm.Subject"
+                                   placeholder="Wedding Photography Inquiry" />
+                        <ValidationMessage For="@(() => contactForm.Subject)" class="text-danger" />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="message">Message <span class="required">*</span></label>
+                        <InputTextArea id="message"
+                                       class="form-control"
+                                       rows="6"
+                                       @bind-Value="contactForm.Message"
+                                       placeholder="Tell us about your photography needs..." />
+                        <ValidationMessage For="@(() => contactForm.Message)" class="text-danger" />
+                        <small class="form-text text-muted">Minimum 10 characters</small>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-lg" disabled="@isSubmitting">
+                        @if (isSubmitting)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2"></span>
+                            <span>Sending...</span>
+                        }
+                        else
+                        {
+                            <span>Send Message</span>
+                        }
+                    </button>
+
+                    @if (!string.IsNullOrEmpty(errorMessage))
+                    {
+                        <div class="alert alert-danger mt-3" role="alert">
+                            <strong>Error:</strong> @errorMessage
+                        </div>
+                    }
+                </EditForm>
+            </div>
+
+            <!-- Contact Information -->
+            <div class="contact-info-section">
+                <h2>Studio Information</h2>
+
+                <div class="info-card">
+                    <div class="info-icon">📍</div>
+                    <div class="info-content">
+                        <h3>Address</h3>
+                        <p>Tunis, Tunisia</p>
+                    </div>
+                </div>
+
+                <div class="info-card">
+                    <div class="info-icon">📧</div>
+                    <div class="info-content">
+                        <h3>Email</h3>
+                        <p>info@studioalamal.tn</p>
+                    </div>
+                </div>
+
+                <div class="info-card">
+                    <div class="info-icon">📞</div>
+                    <div class="info-content">
+                        <h3>Phone</h3>
+                        <p>+216 XX XXX XXX</p>
+                    </div>
+                </div>
+
+                <div class="info-card">
+                    <div class="info-icon">🕐</div>
+                    <div class="info-content">
+                        <h3>Business Hours</h3>
+                        <p>Monday - Friday: 9:00 AM - 6:00 PM</p>
+                        <p>Saturday: 10:00 AM - 4:00 PM</p>
+                        <p>Sunday: Closed</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+    .contact-page {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 40px 20px;
+    }
+
+    .contact-header {
+        text-align: center;
+        margin-bottom: 50px;
+    }
+
+        .contact-header h1 {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .contact-header .lead {
+            font-size: 1.2rem;
+            color: #666;
+        }
+
+    .contact-content {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 40px;
+    }
+
+    @@media (max-width: 768px) {
+        .contact-content {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .contact-form-section {
+        background: white;
+        padding: 40px;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+        .contact-form-section h2 {
+            margin-bottom: 30px;
+            color: #333;
+        }
+
+    .form-group {
+        margin-bottom: 25px;
+    }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+
+    .required {
+        color: #dc3545;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 12px 15px;
+        border: 2px solid #e0e0e0;
+        border-radius: 5px;
+        font-size: 16px;
+        transition: border-color 0.3s;
+    }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.15);
+        }
+
+    textarea.form-control {
+        resize: vertical;
+        min-height: 150px;
+    }
+
+    .btn-lg {
+        padding: 15px 40px;
+        font-size: 18px;
+        width: 100%;
+    }
+
+    .contact-info-section {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+        .contact-info-section h2 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+    .info-card {
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        display: flex;
+        gap: 15px;
+    }
+
+    .info-icon {
+        font-size: 2rem;
+        flex-shrink: 0;
+    }
+
+    .info-content h3 {
+        margin: 0 0 8px 0;
+        font-size: 1.1rem;
+        color: #333;
+    }
+
+    .info-content p {
+        margin: 3px 0;
+        color: #666;
+    }
+
+    .success-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 400px;
+    }
+
+    .success-card {
+        background: white;
+        padding: 60px 40px;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        text-align: center;
+        max-width: 500px;
+    }
+
+    .success-icon {
+        width: 80px;
+        height: 80px;
+        background: #28a745;
+        color: white;
+        font-size: 50px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 20px;
+    }
+
+    .success-card h2 {
+        margin-bottom: 15px;
+        color: #28a745;
+    }
+
+    .success-card p {
+        margin-bottom: 30px;
+        color: #666;
+    }
+
+    .success-card .btn {
+        margin: 5px;
+    }
+</style>
+
+@code {
+    [SupplyParameterFromForm]
+    private ContactSubmissionCreateDto contactForm { get; set; } = new();
+
+    private bool isSubmitting = false;
+    private bool formSubmitted = false;
+    private string errorMessage = string.Empty;
+    private string successMessage = string.Empty;
+
+    private async Task HandleSubmit()
+    {
+        isSubmitting = true;
+        errorMessage = string.Empty;
+
+        try
+        {
+            // Call the backend API
+            var (success, message) = await CommService.SubmitContactFormAsync(contactForm);
+
+            if (success)
+            {
+                // Show success state
+                formSubmitted = true;
+                successMessage = message;
+            }
+            else
+            {
+                // Show error message
+                errorMessage = message;
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Unexpected error: {ex.Message}";
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private void ResetForm()
+    {
+        // Reset to show form again
+        contactForm = new();
+        formSubmitted = false;
+        successMessage = string.Empty;
+        errorMessage = string.Empty;
+    }
+}
