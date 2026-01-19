@@ -17,6 +17,8 @@ builder.Services.AddBlazoredLocalStorage();
 // Add our custom authentication service
 builder.Services.AddScoped<AuthenticationService>();
 
+builder.Services.AddScoped<CommunicationService>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline
