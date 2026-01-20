@@ -19,6 +19,8 @@ builder.Services.AddScoped<AuthenticationService>();
 
 builder.Services.AddScoped<CommunicationService>();
 
+builder.Services.AddScoped<ContentService>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline
