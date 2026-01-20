@@ -1,0 +1,336 @@
+﻿@page "/gallery"
+@using StudioAlAmalWeb.Models
+@using StudioAlAmalWeb.Services
+@inject ContentService ContentService
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+
+<PageTitle>Gallery - Studio Al Amal</PageTitle>
+
+<div class="gallery-page">
+    <div class="gallery-header">
+        <h1>Our Portfolio</h1>
+        <p class="lead">Explore our photography work</p>
+    </div>
+
+    <!-- Category Filter -->
+    <div class="category-filters">
+        <button class="filter-btn @(selectedCategory == null ? "active" : "")"
+                @onclick="@(() => FilterByCategory(null))">
+            All Photos
+        </button>
+
+        <button class="filter-btn @(selectedCategory == "Wedding" ? "active" : "")"
+                @onclick="@(() => FilterByCategory("Wedding"))">
+            Weddings
+        </button>
+
+        <button class="filter-btn @(selectedCategory == "Portrait" ? "active" : "")"
+                @onclick="@(() => FilterByCategory("Portrait"))">
+            Portraits
+        </button>
+
+        <button class="filter-btn @(selectedCategory == "Event" ? "active" : "")"
+                @onclick="@(() => FilterByCategory("Event"))">
+            Events
+        </button>
+
+        <button class="filter-btn @(selectedCategory == "Corporate" ? "active" : "")"
+                @onclick="@(() => FilterByCategory("Corporate"))">
+            Corporate
+        </button>
+
+    </div>
+
+    @if (isLoading)
+    {
+        <div class="loading-state">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p>Loading gallery...</p>
+        </div>
+    }
+    else if (!filteredPhotos.Any())
+    {
+        <div class="empty-state">
+            <div class="empty-icon">📷</div>
+            <h3>No photos found</h3>
+            <p>@(selectedCategory != null ? $"No {selectedCategory} photos available yet." : "No photos available yet.")</p>
+        </div>
+    }
+    else
+    {
+        <!-- Photo Grid -->
+        <div class="photo-grid">
+            @foreach (var photo in filteredPhotos)
+            {
+                <div class="photo-card" @onclick="() => OpenPhoto(photo)">
+                    <img src="@(photo.ThumbnailUrl ?? photo.ImageUrl)"
+                         alt="@photo.Title"
+                         loading="lazy" />
+                    <div class="photo-overlay">
+                        <h3>@photo.Title</h3>
+                        @if (!string.IsNullOrEmpty(photo.Category))
+                        {
+                            <span class="category-badge">@photo.Category</span>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+    <!-- Photo Modal (lightbox) -->
+    @if (selectedPhoto != null)
+    {
+        <div class="photo-modal" @onclick="ClosePhoto">
+            <div class="modal-content" @onclick:stopPropagation="true">
+                <button class="close-btn" @onclick="ClosePhoto">×</button>
+                <img src="@selectedPhoto.ImageUrl" alt="@selectedPhoto.Title" />
+                <div class="modal-info">
+                    <h3>@selectedPhoto.Title</h3>
+                    @if (!string.IsNullOrEmpty(selectedPhoto.Description))
+                    {
+                        <p>@selectedPhoto.Description</p>
+                    }
+                    @if (!string.IsNullOrEmpty(selectedPhoto.Category))
+                    {
+                        <span class="category-badge">@selectedPhoto.Category</span>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+    .gallery-page {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 40px 20px;
+    }
+
+    .gallery-header {
+        text-align: center;
+        margin-bottom: 40px;
+    }
+
+        .gallery-header h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .gallery-header .lead {
+            font-size: 1.2rem;
+            color: #666;
+        }
+
+    .category-filters {
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 40px;
+    }
+
+    .filter-btn {
+        padding: 10px 20px;
+        border: 2px solid #667eea;
+        background: white;
+        color: #667eea;
+        border-radius: 25px;
+        cursor: pointer;
+        transition: all 0.3s;
+        font-weight: 500;
+    }
+
+        .filter-btn:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .filter-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+    .loading-state, .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+    }
+
+    .empty-icon {
+        font-size: 5rem;
+        margin-bottom: 20px;
+    }
+
+    .photo-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 20px;
+    }
+
+    .photo-card {
+        position: relative;
+        overflow: hidden;
+        border-radius: 10px;
+        cursor: pointer;
+        aspect-ratio: 4/3;
+        background: #f0f0f0;
+    }
+
+        .photo-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s;
+        }
+
+        .photo-card:hover img {
+            transform: scale(1.1);
+        }
+
+    .photo-overlay {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+        padding: 20px;
+        transform: translateY(100%);
+        transition: transform 0.3s;
+        color: white;
+    }
+
+    .photo-card:hover .photo-overlay {
+        transform: translateY(0);
+    }
+
+    .photo-overlay h3 {
+        margin: 0 0 10px 0;
+        font-size: 1.2rem;
+    }
+
+    .category-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 15px;
+        font-size: 0.85rem;
+    }
+
+    /* Photo Modal */
+    .photo-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.9);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        padding: 20px;
+    }
+
+    .modal-content {
+        position: relative;
+        max-width: 90vw;
+        max-height: 90vh;
+        background: white;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+        .modal-content img {
+            display: block;
+            max-width: 100%;
+            max-height: 70vh;
+            object-fit: contain;
+        }
+
+    .modal-info {
+        padding: 20px;
+    }
+
+        .modal-info h3 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+
+        .modal-info p {
+            margin: 10px 0;
+            color: #666;
+        }
+
+    .close-btn {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: white;
+        border: none;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        font-size: 30px;
+        line-height: 1;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+        .close-btn:hover {
+            background: #f0f0f0;
+        }
+</style>
+
+@code {
+    private List<Photo> photos = new();
+    private List<Photo> filteredPhotos = new();
+    private string? selectedCategory = null;
+    private Photo? selectedPhoto = null;
+    private bool isLoading = false;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await LoadPhotos();
+        }
+    }
+
+    private async Task LoadPhotos()
+    {
+        isLoading = true;
+        StateHasChanged();
+
+        photos = await ContentService.GetPhotosAsync(activeOnly: true);
+        filteredPhotos = photos;
+
+        isLoading = false;
+        StateHasChanged();
+    }
+
+    private void FilterByCategory(string? category)
+    {
+        selectedCategory = category;
+        filteredPhotos = string.IsNullOrEmpty(category)
+            ? photos
+            : photos.Where(p => p.Category == category).ToList();
+    }
+
+    private void OpenPhoto(Photo photo)
+    {
+        selectedPhoto = photo;
+    }
+
+    private void ClosePhoto()
+    {
+        selectedPhoto = null;
+    }
+}

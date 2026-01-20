@@ -1,0 +1,121 @@
+﻿@page "/admin/content"
+@using StudioAlAmalWeb.Models
+@using StudioAlAmalWeb.Services
+@inject ContentService ContentService
+@inject AuthenticationService AuthService
+@inject NavigationManager Navigation
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+
+<PageTitle>Content Management - Studio Al Amal Admin</PageTitle>
+
+@if (!isAuthenticated)
+{
+    <div class="alert alert-warning">
+        <p>You must be logged in to manage content.</p>
+        <a href="/login" class="btn btn-primary">Login</a>
+    </div>
+}
+else
+{
+    <div class="admin-content-page">
+        <h1>Content Management</h1>
+
+        <!-- Tabs -->
+        <div class="admin-tabs">
+            <button class="tab-btn @(activeTab == "promos" ? "active" : "")" 
+                    @onclick="() => SwitchTab("promos")">
+                📣 Promos
+            </button>
+            <button class="tab-btn @(activeTab == "photos" ? "active" : "")" 
+                    @onclick="() => SwitchTab("photos")">
+                📸 Photos
+            </button>
+            <button class="tab-btn @(activeTab == "videos" ? "active" : "")" 
+                    @onclick="() => SwitchTab("videos")">
+                🎬 Videos
+            </button>
+            <button class="tab-btn @(activeTab == "about" ? "active" : "")" 
+                    @onclick="() => SwitchTab("about")">
+                ℹ️ About Us
+            </button>
+        </div>
+
+        <!-- Tab Content -->
+        <div class="tab-content">
+            @if (activeTab == "promos")
+            {
+                <PromoManagement />
+            }
+            else if (activeTab == "photos")
+            {
+                <PhotoManagement />
+            }
+            else if (activeTab == "videos")
+            {
+                <VideoManagement />
+            }
+            else if (activeTab == "about")
+            {
+                <AboutManagement />
+            }
+        </div>
+    </div>
+}
+
+<style>
+    .admin-content-page {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 40px 20px;
+    }
+
+    .admin-content-page h1 {
+        margin-bottom: 30px;
+        color: #333;
+    }
+
+    .admin-tabs {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 30px;
+        flex-wrap: wrap;
+    }
+
+    .tab-btn {
+        padding: 12px 24px;
+        border: 2px solid #ddd;
+        background: white;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 16px;
+        transition: all 0.3s;
+    }
+
+    .tab-btn:hover {
+        border-color: #667eea;
+        color: #667eea;
+    }
+
+    .tab-btn.active {
+        background: #667eea;
+        color: white;
+        border-color: #667eea;
+    }
+
+    .tab-content {
+        background: white;
+        border-radius: 10px;
+        padding: 30px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+</style>
+
+@code {
+    private bool isAuthenticated = false;
+    private string activeTab = "promos";
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            isAuthenticated = await AuthService.IsAuthentic
