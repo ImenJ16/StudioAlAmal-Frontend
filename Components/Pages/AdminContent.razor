@@ -22,22 +22,26 @@ else
 
         <!-- Tabs -->
         <div class="admin-tabs">
-            <button class="tab-btn @(activeTab == "promos" ? "active" : "")" 
-                    @onclick="() => SwitchTab("promos")">
+            <button class="tab-btn @(activeTab == "promos" ? "active" : "")"
+                    @onclick="@(() => SwitchTab("promos"))">
                 📣 Promos
             </button>
-            <button class="tab-btn @(activeTab == "photos" ? "active" : "")" 
-                    @onclick="() => SwitchTab("photos")">
+
+            <button class="tab-btn @(activeTab == "photos" ? "active" : "")"
+                    @onclick="@(() => SwitchTab("photos"))">
                 📸 Photos
             </button>
-            <button class="tab-btn @(activeTab == "videos" ? "active" : "")" 
-                    @onclick="() => SwitchTab("videos")">
+
+            <button class="tab-btn @(activeTab == "videos" ? "active" : "")"
+                    @onclick="@(() => SwitchTab("videos"))">
                 🎬 Videos
             </button>
-            <button class="tab-btn @(activeTab == "about" ? "active" : "")" 
-                    @onclick="() => SwitchTab("about")">
+
+            <button class="tab-btn @(activeTab == "about" ? "active" : "")"
+                    @onclick="@(() => SwitchTab("about"))">
                 ℹ️ About Us
             </button>
+
         </div>
 
         <!-- Tab Content -->
@@ -118,4 +122,19 @@ else
     {
         if (firstRender)
         {
-            isAuthenticated = await AuthService.IsAuthentic
+            isAuthenticated = await AuthService.IsAuthenticatedAsync();
+        if (!isAuthenticated)
+        {
+            Navigation.NavigateTo("/login");
+            return;
+        }
+
+        StateHasChanged();
+    }
+}
+
+private void SwitchTab(string tab)
+{
+    activeTab = tab;
+}
+}
