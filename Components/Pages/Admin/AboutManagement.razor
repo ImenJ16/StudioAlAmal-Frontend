@@ -1,0 +1,189 @@
+﻿@using StudioAlAmalWeb.Models
+@using StudioAlAmalWeb.Services
+@inject ContentService ContentService
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+
+<div class="content-management">
+    <h2>About Us Content</h2>
+
+    @if (isLoading)
+    {
+        <div class="loading-state">Loading...</div>
+    }
+    else
+    {
+        <div class="about-form">
+            <EditForm Model="aboutModel" OnValidSubmit="HandleUpdate" FormName="aboutForm">
+                <DataAnnotationsValidator />
+
+                <div class="form-group">
+                    <label>About Us Content *</label>
+                    <InputTextArea class="form-control" @bind-Value="aboutModel.Content" rows="10"
+                                   placeholder="Tell visitors about Studio Al Amal..." />
+                    <ValidationMessage For="@(() => aboutModel.Content)" />
+                    <small>Minimum 50 characters</small>
+                </div>
+
+                <div class="form-group">
+                    <label>Image URL (optional)</label>
+                    <InputText class="form-control" @bind-Value="aboutModel.ImageUrl"
+                               placeholder="https://example.com/about-image.jpg" />
+                    <ValidationMessage For="@(() => aboutModel.ImageUrl)" />
+                </div>
+
+                @if (currentAbout != null)
+                {
+                    <div class="info-box">
+                        <small>Last Updated: @currentAbout.UpdatedAt.ToString("MMMM dd, yyyy 'at' hh:mm tt")</small>
+                    </div>
+                }
+
+                <button type="submit" class="btn btn-success" disabled="@isSubmitting">
+                    @(isSubmitting ? "Updating..." : "Update About Us")
+                </button>
+
+                @if (!string.IsNullOrEmpty(message))
+                {
+                    <div class="alert @(messageIsSuccess ? "alert-success" : "alert-danger") mt-3">
+                        @message
+                    </div>
+                }
+            </EditForm>
+
+            @if (!string.IsNullOrEmpty(aboutModel.ImageUrl))
+            {
+                <div class="preview-section">
+                    <h3>Image Preview</h3>
+                    <img src="@aboutModel.ImageUrl" alt="About Us" class="preview-image" />
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<style>
+    .content-management {
+        width: 100%;
+    }
+
+        .content-management h2 {
+            margin-bottom: 30px;
+            color: #333;
+        }
+
+    .about-form {
+        max-width: 800px;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #555;
+        }
+
+    .form-control {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        font-size: 16px;
+        font-family: inherit;
+    }
+
+    .form-group small {
+        color: #888;
+        font-size: 0.9rem;
+    }
+
+    .info-box {
+        background: #e7f3ff;
+        padding: 10px 15px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+        color: #0066cc;
+    }
+
+    .preview-section {
+        margin-top: 30px;
+        padding-top: 30px;
+        border-top: 2px solid #eee;
+    }
+
+        .preview-section h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+    .preview-image {
+        max-width: 100%;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .loading-state {
+        text-align: center;
+        padding: 40px;
+        color: #888;
+    }
+</style>
+
+@code {
+    [SupplyParameterFromForm]
+    private AboutUsUpdateDto aboutModel { get; set; } = new();
+
+    private AboutUs? currentAbout;
+    private bool isLoading = false;
+    private bool isSubmitting = false;
+    private string message = string.Empty;
+    private bool messageIsSuccess = false;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await LoadAboutUs();
+        }
+    }
+
+    private async Task LoadAboutUs()
+    {
+        isLoading = true;
+        StateHasChanged();
+
+        currentAbout = await ContentService.GetAboutUsAsync();
+
+        if (currentAbout != null)
+        {
+            aboutModel.Content = currentAbout.Content;
+            aboutModel.ImageUrl = currentAbout.ImageUrl;
+        }
+
+        isLoading = false;
+        StateHasChanged();
+    }
+
+    private async Task HandleUpdate()
+    {
+        isSubmitting = true;
+        message = string.Empty;
+
+        var (success, msg) = await ContentService.UpdateAboutUsAsync(aboutModel);
+
+        messageIsSuccess = success;
+        message = msg;
+
+        if (success)
+        {
+            await LoadAboutUs();
+            await Task.Delay(3000);
+            message = string.Empty;
+        }
+
+        isSubmitting = false;
+    }
+}

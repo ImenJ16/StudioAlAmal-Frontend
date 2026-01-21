@@ -1,0 +1,321 @@
+﻿@using StudioAlAmalWeb.Models
+@using StudioAlAmalWeb.Services
+@inject ContentService ContentService
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+
+<div class="content-management">
+    <div class="section-header">
+        <h2>Manage Promos</h2>
+        <button class="btn btn-primary" @onclick="ToggleAddForm">
+            @(showAddForm ? "Cancel" : "+ Add New Promo")
+        </button>
+    </div>
+
+    <!-- Add New Promo Form -->
+    @if (showAddForm)
+    {
+        <div class="add-form-card">
+            <h3>Add New Promo</h3>
+            <EditForm Model="newPromo" OnValidSubmit="HandleCreatePromo" FormName="createPromoForm">
+                <DataAnnotationsValidator />
+
+                <div class="form-group">
+                    <label>Title *</label>
+                    <InputText class="form-control" @bind-Value="newPromo.Title" placeholder="Winter Special - 20% Off" />
+                    <ValidationMessage For="@(() => newPromo.Title)" />
+                </div>
+
+                <div class="form-group">
+                    <label>Description</label>
+                    <InputTextArea class="form-control" @bind-Value="newPromo.Description" rows="3"
+                                   placeholder="Book your wedding photography for winter..." />
+                </div>
+
+                <div class="form-group">
+                    <label>Image URL *</label>
+                    <InputText class="form-control" @bind-Value="newPromo.ImageUrl"
+                               placeholder="https://example.com/image.jpg" />
+                    <ValidationMessage For="@(() => newPromo.ImageUrl)" />
+                    <small>Use image hosting services like Imgur, Cloudinary, or direct URLs</small>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Display Order</label>
+                        <InputNumber class="form-control" @bind-Value="newPromo.DisplayOrder" />
+                        <ValidationMessage For="@(() => newPromo.DisplayOrder)" />
+                    </div>
+
+                    <div class="form-group">
+                        <label>
+                            <InputCheckbox @bind-Value="newPromo.IsActive" />
+                            Active
+                        </label>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-success" disabled="@isSubmitting">
+                    @(isSubmitting ? "Creating..." : "Create Promo")
+                </button>
+
+                @if (!string.IsNullOrEmpty(message))
+                {
+                    <div class="alert @(messageIsSuccess ? "alert-success" : "alert-danger") mt-3">
+                        @message
+                    </div>
+                }
+            </EditForm>
+        </div>
+    }
+
+    <!-- Promos List -->
+    @if (isLoading)
+    {
+        <div class="loading-state">Loading promos...</div>
+    }
+    else if (!promos.Any())
+    {
+        <div class="empty-state">
+            <p>No promos yet. Create your first promo above!</p>
+        </div>
+    }
+    else
+    {
+        <div class="items-grid">
+            @foreach (var promo in promos)
+            {
+                <div class="item-card">
+                    <div class="item-image">
+                        <img src="@promo.ImageUrl" alt="@promo.Title" />
+                        @if (!promo.IsActive)
+                        {
+                            <span class="inactive-badge">Inactive</span>
+                        }
+                    </div>
+                    <div class="item-content">
+                        <h4>@promo.Title</h4>
+                        @if (!string.IsNullOrEmpty(promo.Description))
+                        {
+                            <p>@promo.Description</p>
+                        }
+                        <div class="item-meta">
+                            <small>Order: @promo.DisplayOrder</small>
+                            <small>Created: @promo.CreatedAt.ToString("MMM dd, yyyy")</small>
+                        </div>
+                    </div>
+                    <div class="item-actions">
+                        <button class="btn btn-sm btn-danger" @onclick="() => DeletePromo(promo.Id)">
+                            Delete
+                        </button>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<style>
+    .content-management {
+        width: 100%;
+    }
+
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+    }
+
+        .section-header h2 {
+            margin: 0;
+            color: #333;
+        }
+
+    .add-form-card {
+        background: #f8f9fa;
+        padding: 30px;
+        border-radius: 10px;
+        margin-bottom: 30px;
+    }
+
+        .add-form-card h3 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #555;
+        }
+
+    .form-control {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        font-size: 16px;
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+
+    .items-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 20px;
+    }
+
+    .item-card {
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        overflow: hidden;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+        .item-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+
+    .item-image {
+        position: relative;
+        width: 100%;
+        height: 200px;
+        overflow: hidden;
+    }
+
+        .item-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+    .inactive-badge {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: rgba(220, 53, 69, 0.9);
+        color: white;
+        padding: 4px 12px;
+        border-radius: 15px;
+        font-size: 0.85rem;
+    }
+
+    .item-content {
+        padding: 15px;
+    }
+
+        .item-content h4 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+
+        .item-content p {
+            margin: 0 0 10px 0;
+            color: #666;
+            font-size: 0.95rem;
+        }
+
+    .item-meta {
+        display: flex;
+        justify-content: space-between;
+        padding-top: 10px;
+        border-top: 1px solid #eee;
+        font-size: 0.85rem;
+        color: #888;
+    }
+
+    .item-actions {
+        padding: 15px;
+        border-top: 1px solid #eee;
+        text-align: right;
+    }
+
+    .loading-state, .empty-state {
+        text-align: center;
+        padding: 40px;
+        color: #888;
+    }
+</style>
+
+@code {
+    [SupplyParameterFromForm]
+    private PromoCreateDto newPromo { get; set; } = new();
+
+    private List<Promo> promos = new();
+    private bool showAddForm = false;
+    private bool isLoading = false;
+    private bool isSubmitting = false;
+    private string message = string.Empty;
+    private bool messageIsSuccess = false;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await LoadPromos();
+        }
+    }
+
+    private async Task LoadPromos()
+    {
+        isLoading = true;
+        StateHasChanged();
+
+        promos = await ContentService.GetPromosAsync();
+
+        isLoading = false;
+        StateHasChanged();
+    }
+
+    private void ToggleAddForm()
+    {
+        showAddForm = !showAddForm;
+        if (!showAddForm)
+        {
+            message = string.Empty;
+        }
+    }
+
+    private async Task HandleCreatePromo()
+    {
+        isSubmitting = true;
+        message = string.Empty;
+
+        var (success, msg) = await ContentService.CreatePromoAsync(newPromo);
+
+        messageIsSuccess = success;
+        message = msg;
+
+        if (success)
+        {
+            newPromo = new();
+            await LoadPromos();
+            await Task.Delay(2000);
+            showAddForm = false;
+            message = string.Empty;
+        }
+
+        isSubmitting = false;
+    }
+
+    private async Task DeletePromo(int id)
+    {
+        var success = await ContentService.DeletePromoAsync(id);
+        if (success)
+        {
+            await LoadPromos();
+        }
+    }
+}

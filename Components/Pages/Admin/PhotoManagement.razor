@@ -1,0 +1,330 @@
+﻿@using StudioAlAmalWeb.Models
+@using StudioAlAmalWeb.Services
+@inject ContentService ContentService
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+
+<div class="content-management">
+    <div class="section-header">
+        <h2>Manage Photos</h2>
+        <button class="btn btn-primary" @onclick="ToggleAddForm">
+            @(showAddForm ? "Cancel" : "+ Add New Photo")
+        </button>
+    </div>
+
+    @if (showAddForm)
+    {
+        <div class="add-form-card">
+            <h3>Add New Photo</h3>
+            <EditForm Model="newPhoto" OnValidSubmit="HandleCreatePhoto" FormName="createPhotoForm">
+                <DataAnnotationsValidator />
+
+                <div class="form-group">
+                    <label>Title *</label>
+                    <InputText class="form-control" @bind-Value="newPhoto.Title" />
+                    <ValidationMessage For="@(() => newPhoto.Title)" />
+                </div>
+
+                <div class="form-group">
+                    <label>Description</label>
+                    <InputTextArea class="form-control" @bind-Value="newPhoto.Description" rows="3" />
+                </div>
+
+                <div class="form-group">
+                    <label>Image URL *</label>
+                    <InputText class="form-control" @bind-Value="newPhoto.ImageUrl" />
+                    <ValidationMessage For="@(() => newPhoto.ImageUrl)" />
+                </div>
+
+                <div class="form-group">
+                    <label>Thumbnail URL (optional)</label>
+                    <InputText class="form-control" @bind-Value="newPhoto.ThumbnailUrl" />
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Category</label>
+                        <InputSelect class="form-control" @bind-Value="newPhoto.Category">
+                            <option value="">Select category...</option>
+                            <option value="Wedding">Wedding</option>
+                            <option value="Portrait">Portrait</option>
+                            <option value="Event">Event</option>
+                            <option value="Corporate">Corporate</option>
+                        </InputSelect>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Display Order</label>
+                        <InputNumber class="form-control" @bind-Value="newPhoto.DisplayOrder" />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <InputCheckbox @bind-Value="newPhoto.IsActive" />
+                        Active
+                    </label>
+                </div>
+
+                <button type="submit" class="btn btn-success" disabled="@isSubmitting">
+                    @(isSubmitting ? "Adding..." : "Add Photo")
+                </button>
+
+                @if (!string.IsNullOrEmpty(message))
+                {
+                    <div class="alert @(messageIsSuccess ? "alert-success" : "alert-danger") mt-3">
+                        @message
+                    </div>
+                }
+            </EditForm>
+        </div>
+    }
+
+    @if (isLoading)
+    {
+        <div class="loading-state">Loading photos...</div>
+    }
+    else if (!photos.Any())
+    {
+        <div class="empty-state">
+            <p>No photos yet. Add your first photo above!</p>
+        </div>
+    }
+    else
+    {
+        <div class="items-grid">
+            @foreach (var photo in photos)
+            {
+                <div class="item-card">
+                    <div class="item-image">
+                        <img src="@(photo.ThumbnailUrl ?? photo.ImageUrl)" alt="@photo.Title" />
+                        @if (!photo.IsActive)
+                        {
+                            <span class="inactive-badge">Inactive</span>
+                        }
+                        @if (!string.IsNullOrEmpty(photo.Category))
+                        {
+                            <span class="category-badge">@photo.Category</span>
+                        }
+                    </div>
+                    <div class="item-content">
+                        <h4>@photo.Title</h4>
+                        @if (!string.IsNullOrEmpty(photo.Description))
+                        {
+                            <p>@photo.Description</p>
+                        }
+                        <div class="item-meta">
+                            <small>Order: @photo.DisplayOrder</small>
+                            <small>@photo.CreatedAt.ToString("MMM dd, yyyy")</small>
+                        </div>
+                    </div>
+                    <div class="item-actions">
+                        <button class="btn btn-sm btn-danger" @onclick="() => DeletePhoto(photo.Id)">
+                            Delete
+                        </button>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<style>
+    .content-management {
+        width: 100%;
+    }
+
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+    }
+
+        .section-header h2 {
+            margin: 0;
+            color: #333;
+        }
+
+    .add-form-card {
+        background: #f8f9fa;
+        padding: 30px;
+        border-radius: 10px;
+        margin-bottom: 30px;
+    }
+
+        .add-form-card h3 {
+            margin-top: 0;
+            margin-bottom: 20px;
+        }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+    .form-control {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+
+    .items-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 20px;
+    }
+
+    .item-card {
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+    .item-image {
+        position: relative;
+        width: 100%;
+        height: 200px;
+        overflow: hidden;
+    }
+
+        .item-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+    .inactive-badge {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: rgba(220, 53, 69, 0.9);
+        color: white;
+        padding: 4px 12px;
+        border-radius: 15px;
+        font-size: 0.85rem;
+    }
+
+    .category-badge {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        background: rgba(102, 126, 234, 0.9);
+        color: white;
+        padding: 4px 12px;
+        border-radius: 15px;
+        font-size: 0.85rem;
+    }
+
+    .item-content {
+        padding: 15px;
+    }
+
+        .item-content h4 {
+            margin: 0 0 10px 0;
+        }
+
+        .item-content p {
+            margin: 0 0 10px 0;
+            color: #666;
+            font-size: 0.95rem;
+        }
+
+    .item-meta {
+        display: flex;
+        justify-content: space-between;
+        padding-top: 10px;
+        border-top: 1px solid #eee;
+        font-size: 0.85rem;
+        color: #888;
+    }
+
+    .item-actions {
+        padding: 15px;
+        border-top: 1px solid #eee;
+        text-align: right;
+    }
+
+    .loading-state, .empty-state {
+        text-align: center;
+        padding: 40px;
+        color: #888;
+    }
+</style>
+
+@code {
+    [SupplyParameterFromForm]
+    private PhotoCreateDto newPhoto { get; set; } = new();
+
+    private List<Photo> photos = new();
+    private bool showAddForm = false;
+    private bool isLoading = false;
+    private bool isSubmitting = false;
+    private string message = string.Empty;
+    private bool messageIsSuccess = false;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await LoadPhotos();
+        }
+    }
+
+    private async Task LoadPhotos()
+    {
+        isLoading = true;
+        StateHasChanged();
+
+        photos = await ContentService.GetPhotosAsync();
+
+        isLoading = false;
+        StateHasChanged();
+    }
+
+    private void ToggleAddForm()
+    {
+        showAddForm = !showAddForm;
+        if (!showAddForm) message = string.Empty;
+    }
+
+    private async Task HandleCreatePhoto()
+    {
+        isSubmitting = true;
+        message = string.Empty;
+
+        var (success, msg) = await ContentService.CreatePhotoAsync(newPhoto);
+
+        messageIsSuccess = success;
+        message = msg;
+
+        if (success)
+        {
+            newPhoto = new();
+            await LoadPhotos();
+            await Task.Delay(2000);
+            showAddForm = false;
+            message = string.Empty;
+        }
+
+        isSubmitting = false;
+    }
+
+    private async Task DeletePhoto(int id)
+    {
+        var success = await ContentService.DeletePhotoAsync(id);
+        if (success) await LoadPhotos();
+    }
+}

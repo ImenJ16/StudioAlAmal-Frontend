@@ -123,18 +123,19 @@ else
         if (firstRender)
         {
             isAuthenticated = await AuthService.IsAuthenticatedAsync();
-        if (!isAuthenticated)
-        {
-            Navigation.NavigateTo("/login");
-            return;
+
+            if (!isAuthenticated)
+            {
+                Navigation.NavigateTo("/login");
+                return;
+            }
+
+            StateHasChanged();
         }
-
-        StateHasChanged();
     }
-}
 
-private void SwitchTab(string tab)
-{
-    activeTab = tab;
-}
+    private void SwitchTab(string tab)
+    {
+        activeTab = tab;
+    }
 }
