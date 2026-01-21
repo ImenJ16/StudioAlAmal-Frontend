@@ -1,0 +1,128 @@
+﻿@page "/about"
+@using StudioAlAmalWeb.Models
+@using StudioAlAmalWeb.Services
+@inject ContentService ContentService
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+
+<PageTitle>About Us - Studio Al Amal</PageTitle>
+
+<div class="about-page">
+    @if (isLoading)
+    {
+        <div class="loading-state">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p>Loading...</p>
+        </div>
+    }
+    else if (aboutUs == null)
+    {
+        <div class="empty-state">
+            <h2>About Us</h2>
+            <p>Information coming soon...</p>
+        </div>
+    }
+    else
+    {
+        <div class="about-container">
+            <h1>About Studio Al Amal</h1>
+
+            @if (!string.IsNullOrEmpty(aboutUs.ImageUrl))
+            {
+                <div class="about-image">
+                    <img src="@aboutUs.ImageUrl" alt="Studio Al Amal" />
+                </div>
+            }
+
+            <div class="about-content">
+                @foreach (var paragraph in aboutUs.Content.Split(new[] { "\n\n", "\r\n\r\n" }, StringSplitOptions.RemoveEmptyEntries))
+                {
+                    <p>@paragraph</p>
+                }
+            </div>
+
+            <div class="about-footer">
+                <small>Last updated: @aboutUs.UpdatedAt.ToString("MMMM dd, yyyy")</small>
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+    .about-page {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 40px 20px;
+    }
+
+    .about-container h1 {
+        font-size: 2.5rem;
+        color: #333;
+        margin-bottom: 30px;
+        text-align: center;
+    }
+
+    .about-image {
+        margin-bottom: 30px;
+        text-align: center;
+    }
+
+        .about-image img {
+            max-width: 100%;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+    .about-content {
+        font-size: 1.1rem;
+        line-height: 1.8;
+        color: #555;
+    }
+
+        .about-content p {
+            margin-bottom: 20px;
+        }
+
+    .about-footer {
+        margin-top: 40px;
+        padding-top: 20px;
+        border-top: 1px solid #eee;
+        text-align: center;
+        color: #888;
+    }
+
+    .loading-state, .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+    }
+
+        .empty-state h2 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+</style>
+
+@code {
+    private AboutUs? aboutUs;
+    private bool isLoading = false;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await LoadAboutUs();
+        }
+    }
+
+    private async Task LoadAboutUs()
+    {
+        isLoading = true;
+        StateHasChanged();
+
+        aboutUs = await ContentService.GetAboutUsAsync();
+
+        isLoading = false;
+        StateHasChanged();
+    }
+}

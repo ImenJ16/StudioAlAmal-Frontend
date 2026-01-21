@@ -7,7 +7,7 @@
 <input type="checkbox" title="Navigation menu" class="navbar-toggler" />
 
 <div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
-    <nav class="nav flex-column">
+    <nav class="flex-column">
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
                 <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
@@ -15,38 +15,40 @@
         </div>
 
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="counter">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Counter
+            <NavLink class="nav-link" href="gallery">
+                <span class="bi bi-images" aria-hidden="true"></span> Gallery
             </NavLink>
         </div>
 
-        <div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
-            <nav class="flex-column">
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                        <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
-                    </NavLink>
-                </div>
-                <!-- Add these new links -->
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="contact">
-                        <span class="bi bi-envelope-fill" aria-hidden="true"></span> Contact Us
-                    </NavLink>
-                </div>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="about">
+                <span class="bi bi-info-circle-fill" aria-hidden="true"></span> About Us
+            </NavLink>
+        </div>
 
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="messages">
-                        <span class="bi bi-chat-dots-fill" aria-hidden="true"></span> Messages
-                    </NavLink>
-                </div>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="contact">
+                <span class="bi bi-envelope-fill" aria-hidden="true"></span> Contact Us
+            </NavLink>
+        </div>
 
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="login">
-                        <span class="bi bi-person-fill" aria-hidden="true"></span> Login
-                    </NavLink>
-                </div>
-            </nav>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="messages">
+                <span class="bi bi-chat-dots-fill" aria-hidden="true"></span> Messages
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="login">
+                <span class="bi bi-person-fill" aria-hidden="true"></span> Login
+            </NavLink>
+        </div>
+
+        <!-- Admin Section -->
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="admin/content">
+                <span class="bi bi-gear-fill" aria-hidden="true"></span> Admin Content
+            </NavLink>
         </div>
     </nav>
 </div>
-
